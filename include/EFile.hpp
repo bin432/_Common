@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "io/io.hpp"
 
-class EFile : public IReadWriteCloser
+class EFile : public IO::IReadWriteCloser
 {
 public:
 	// Flag values
@@ -155,7 +155,7 @@ public:
 		}
 		return dwWritten;
 	}
-	__int64 Seek(__int64 lOff, ISeeker::SeekPosition e=ISeeker::begin)
+	__int64 Seek(__int64 lOff, IO::ISeeker::SeekPosition e = IO::ISeeker::begin)
 	{
 		LARGE_INTEGER liOff;
 

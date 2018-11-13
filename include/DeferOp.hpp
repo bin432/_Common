@@ -5,26 +5,22 @@
 #ifndef __DEFER_H_
 #define __DEFER_H_
 #pragma once
+#include <functional>
 
-#define CONCAT_(a, b) a ## b
+#define CONCAT_(a, b) a##b
 #define CONCAT(a, b) CONCAT_(a,b)
-// 延迟 处理 一般在 作用域结束时 执行
-#define Defer(fn) DeferOp CONCAT(__defer__, __LINE__) = [&](){fn}
+/*
+eg. defer(代码);  注意后面 一定要加上 ;
+*/
+
+#define defer(code) DeferOp CONCAT(_defer_, __LINE__) = [&](){code}
 
 class DeferOp
 {
 public:
-	template<class Callable>
-	DeferOp(Callable &&fn)
-		: m_fun(std::forward<Callable>(fn))
-	{
-
-	}
-	DeferOp(DeferOp &&other)
-		: m_fun(std::move(other.m_fun))
-	{
-		other.m_fun = nullptr;
-	}
+	DeferOp(std::function<void()>&& fn)
+		: m_fun(std::move(fn))
+	{}
 	~DeferOp()
 	{
 		if (nullptr != m_fun)
@@ -32,10 +28,18 @@ public:
 			m_fun();
 		}
 	}
+
+#if _MSC_VER >= 1700	//VS2012
+	DeferOp(DeferOp &&other) = delete;
 	DeferOp(const DeferOp&) = delete;
 	void operator=(const DeferOp &) = delete;
+#else
+	DeferOp(DeferOp &&other);
+	DeferOp(const DeferOp&);
+	void operator=(const DeferOp &);
+#endif
 protected:
 	std::function<void()> m_fun;
 };
 
-#endif	//__AUTO_DELETE_H_
+#endif	//__DEFER_H_

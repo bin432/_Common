@@ -1,7 +1,9 @@
 #ifndef __FILE_FOLDER_HELPER_HPP_
 #define __FILE_FOLDER_HELPER_HPP_
 #pragma once
+#include <ShellAPI.h>
 #include <Shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
 #include <ShlObj.h>
 #include <string>
 #include <list>
@@ -125,8 +127,8 @@ public:
 					if (!RemoveDirectory(sFilePath.c_str()) && 145 == GetLastError())
 					{
 						//如果是文件夹 就先入列   
-						listFolder.push_back(sFilePath + _T("\\"));
-						listDel.push_back(sFilePath + _T("\\"));
+						listFolder.push_back(sFilePath + L"\\");
+						listDel.push_back(sFilePath + L"\\");
 					}
 				}
 				else
@@ -174,7 +176,7 @@ public:
 			std::wstring sFolder = listFolder.front();
 			listFolder.pop_front();
 
-			std::wstring sFilePath = sFolder + _T("\\*");
+			std::wstring sFilePath = sFolder + L"\\*";
 
 			WIN32_FIND_DATA fd;
 			HANDLE hFind = FindFirstFile(sFilePath.c_str(), &fd);
@@ -187,7 +189,7 @@ public:
 			do
 			{
 				std::wstring strName = fd.cFileName;
-				if (_T(".") == strName || _T("..") == strName)
+				if (L"." == strName || L".." == strName)
 				{
 					continue;
 				}
@@ -195,7 +197,7 @@ public:
 				if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
 				{
 					//如果是文件夹 就先入列   
-					listFolder.push_back(sFolder + _T("\\") + fd.cFileName);
+					listFolder.push_back(sFolder + L"\\" + fd.cFileName);
 					continue;
 				}
 
@@ -239,7 +241,7 @@ public:
 			std::wstring sFolder = listFolder.front();
 			listFolder.pop_front();
 
-			std::wstring sFilePath = sFolder + _T("\\*");
+			std::wstring sFilePath = sFolder + L"\\*";
 
 			WIN32_FIND_DATA fd;
 			HANDLE hFind = FindFirstFile(sFilePath.c_str(), &fd);
@@ -252,7 +254,7 @@ public:
 			do
 			{
 				std::wstring strName = fd.cFileName;
-				if (_T(".") == strName || _T("..") == strName)
+				if (L"." == strName || L".." == strName)
 				{
 					continue;
 				}
@@ -260,7 +262,7 @@ public:
 				if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
 				{
 					//如果是文件夹 就先入列   
-					listFolder.push_back(sFolder + _T("\\") + fd.cFileName);
+					listFolder.push_back(sFolder + L"\\" + fd.cFileName);
 					++info.uFolderCount;
 					continue;
 				}
@@ -300,9 +302,9 @@ public:
 	static std::wstring FileSizeToStr(unsigned __int64 ulFileSize)
 	{
 		if (ulFileSize < 0)
-			return _T("未知");
+			return L"未知";
 		else if (0 == ulFileSize)
-			return _T("0 字节");
+			return L"0 字节";
 
 		unsigned int nIndex = 0;
 
@@ -313,26 +315,26 @@ public:
 			nIndex++;
 		}
 
-		static const wchar_t* s_sUnit[] = {_T("字节"), _T("KB"), _T("MB"), _T("GB")};
+		static const wchar_t* s_sUnit[] = {L"字节", L"KB", L"MB", L"GB"};
 
 		wchar_t lpBuf[100] = {0};
 		if (0 == nIndex)
-			swprintf_s(lpBuf, 100, _T("%d %s"), (int)ulFileSize, s_sUnit[0]);
+			swprintf_s(lpBuf, 100, L"%d %s", (int)ulFileSize, s_sUnit[0]);
 		else
-			swprintf_s(lpBuf, 100, _T("%.2f %s"), dSize, s_sUnit[nIndex]);
+			swprintf_s(lpBuf, 100, L"%.2f %s", dSize, s_sUnit[nIndex]);
 		return std::wstring(lpBuf);
 	}
 	static std::wstring FileSizeToBSize(unsigned __int64 ulFileSize)
 	{
 		wchar_t lpBuf[MAX_PATH] = {0};
-		swprintf_s(lpBuf, MAX_PATH, _T("%I64d"), ulFileSize);
+		swprintf_s(lpBuf, MAX_PATH, L"%I64d", ulFileSize);
 		std::wstring szSizeText = lpBuf;
 		int nLeng = szSizeText.length();
 		for (int i = nLeng - 3; i>0; i -= 3)
 		{
-			szSizeText.insert(i, _T(","));
+			szSizeText.insert(i, L",");
 		}
-		szSizeText.append(_T("字节"));
+		szSizeText.append(L"字节");
 		return szSizeText;
 	}
 	
@@ -342,7 +344,7 @@ public:
 	{
 		LPCTSTR lpFileName = ::PathFindFileName(lpFilePath);
 		if (nullptr == lpFileName)
-			return _T("");
+			return std::wstring();
 
 		std::wstring sFileName(lpFileName);
 		return sFileName;
@@ -351,7 +353,7 @@ public:
 	{
 		LPCTSTR lpExt = ::PathFindExtension(lpFileName);
 		if (nullptr == lpExt)
-			return _T("");
+			return std::wstring();
 
 		std::wstring sExt(lpExt + 1);
 		return sExt;

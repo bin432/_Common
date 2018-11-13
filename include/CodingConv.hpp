@@ -1,3 +1,11 @@
+/* at 2018/09/28				v2.1
+
+	修改 之前 string 和wstring 末尾 都会 有一个 '\0'结束符，这个不应该有
+	模版函数 也 
+
+*/
+
+
 #pragma once
 #ifndef __CODINGCONV_H___
 #define __CODINGCONV_H___
@@ -5,13 +13,61 @@
 class CodingConv
 {
 public:
-	template<class STRA>
-	static STRA UnicodeToUtf8(const wchar_t* lpwBuf)
+	static std::string UToA(const wchar_t* lpszW, UINT CodePage= CP_ACP)
 	{
-		if ((nullptr == lpwBuf) || (0 == wcslen(lpwBuf))) return STRA();
+		size_t size_w = wcslen(lpszW);
+		if ((nullptr == lpszW) || (0 == size_w)) return std::string();
+
+		// cchWideChar 如果传 -1  那么返回长度 包括 '\0'  也就是 比 wcslen 多 1;
+		// 所以 还是 传 len 取好了 
+		int nLen = WideCharToMultiByte(CodePage, 0, lpszW, size_w, NULL, 0, NULL, NULL);
+
+		std::string sOut;			// string 不能包含 '\0' 会发生很多意外的事情
+		sOut.resize(nLen);
+
+		nLen = WideCharToMultiByte(CodePage, 0, lpszW, size_w, (char*)sOut.data(), nLen, NULL, NULL);
+
+		return sOut;
+	}
+
+	// 大数据  建议  使用 这两个 转换  比上面 少 一次 内存 拷贝。
+	static std::string UToUtf8(const wchar_t* lpszW)
+	{
+		return UToA(lpszW, CP_UTF8);
+	}
+
+	static std::wstring AToU(const char* lpszA, UINT CodePage = CP_ACP)
+	{
+		size_t size_a = strlen(lpszA);
+		if ((nullptr == lpszA) || (0 == size_a))
+			return std::wstring();
+
+		// cbMultiChar 如果传 -1  那么返回长度 包括 '\0'  也就是 比 wcslen 多 1;
+		// 所以 还是 传 len 取好了 
+		int nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, size_a, NULL, 0);
+
+		std::wstring sOut;
+		sOut.resize(nBufferLen);
+
+		nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, size_a, (wchar_t*)sOut.data(), nBufferLen);
+
+		return sOut;
+	}
+
+	static std::wstring Utf8ToU(const char* lpszUtf8)
+	{
+		return AToU(lpszUtf8, CP_UTF8);
+	}
+
+
+	template<class STRA>
+	static STRA UnicodeToUtf8(const wchar_t* lpszW)
+	{
+		size_t size_w = wcslen(lpszW);
+		if ((nullptr == lpszW) || (0 == size_w)) return STRA();
 
 		//得到转换后的字符串长度
-		int nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpwBuf, -1, NULL, 0, NULL, NULL);
+		int nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, size_w, NULL, 0, NULL, NULL);
 
 		LPSTR lpszUtf8 = new(std::nothrow) char[nBufferLen];
 		if (nullptr == lpszUtf8)
@@ -19,9 +75,7 @@ public:
 			return lpszUtf8;
 		}
 
-		//memset(lpszUtf8, 0, nBufferLen);
-
-		nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpwBuf, -1, lpszUtf8, nBufferLen, NULL, NULL);
+		nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, size_w, lpszUtf8, nBufferLen, NULL, NULL);
 
 		if (nullptr != lpszUtf8)
 		{
@@ -37,11 +91,12 @@ public:
 	template<class STRW>
 	static STRW Utf8ToUnicode(const char* lpszUtf8)
 	{
-		if ((nullptr == lpszUtf8) || (0 == strlen(lpszUtf8)))
+		size_t size_a = strlen(lpszUtf8);
+		if ((nullptr == lpszUtf8) || (0 == size_a))
 			return STRW();
 
 		//得到转换后的字符串长度
-		int nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, -1, NULL, NULL);
+		int nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, size_a, NULL, 0);
 
 		//new buffer
 		LPWSTR lpwBuf = new(std::nothrow) wchar_t[nBufferLen];
@@ -50,9 +105,7 @@ public:
 			return lpwBuf;
 		}
 
-		//memset(lpwBuf, 0, nBufferLen * sizeof(wchar_t));
-
-		nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, -1, lpwBuf, nBufferLen);
+		nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, size_a, lpwBuf, nBufferLen);
 
 
 		if (nullptr != lpwBuf)
@@ -64,48 +117,6 @@ public:
 		}
 
 		return STRW();
-	}
-
-	inline static std::string UToA(const wchar_t* lpszW, UINT CodePage= CP_ACP)
-	{
-		if ((nullptr == lpszW) || (0 == wcslen(lpszW))) return std::string();
-
-		//得到转换后的字符串长度
-		int nLen = WideCharToMultiByte(CodePage, 0, lpszW, -1, NULL, 0, NULL, NULL);
-
-		std::string sOut;
-		sOut.resize(nLen);
-
-		nLen = WideCharToMultiByte(CodePage, 0, lpszW, -1, (char*)sOut.data(), nLen, NULL, NULL);
-
-		return sOut;
-	}
-
-	// 大数据  建议  使用 这两个 转换  比上面 少 一次 内存 拷贝。
-	static std::string UToUtf8(const wchar_t* lpszW)
-	{
-		return UToA(lpszW, CP_UTF8);
-	}
-
-	inline static std::wstring AToU(const char* lpszA, UINT CodePage = CP_ACP)
-	{
-		if ((nullptr == lpszA) || (0 == strlen(lpszA)))
-			return std::wstring();
-
-		//得到转换后的字符串长度
-		int nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, -1, NULL, NULL);
-
-		std::wstring sOut;
-		sOut.resize(nBufferLen);
-
-		nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, -1, (wchar_t*)sOut.data(), nBufferLen);
-
-		return sOut;
-	}
-
-	static std::wstring Utf8ToU(const char* lpszUtf8)
-	{
-		return AToU(lpszUtf8, CP_UTF8);
 	}
 };
 
