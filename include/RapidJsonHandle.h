@@ -30,6 +30,8 @@ typedef GenericDocument<UTF16<>>::AllocatorType			AllocatorW;
 
 
 #if 1
+template <typename Encoding>
+class GenericValueHandle;
 /*
 这个封装 简化了 原来的代码量。适用于 只有简单类型的键值对 。
 对于要添加数组和对象的 还是用原来的方法添加。AddMember
@@ -41,12 +43,19 @@ public:
 	typedef typename Encoding::Ch Ch;
 	GenericDocumentHandle()
 	{
-		SetObject();
+		GenericDocument<Encoding>::SetObject();
 	}
 	~GenericDocumentHandle()
 	{
 
 	}
+	GenericValue<Encoding>& Add(const Ch* lpKey, const std::basic_string<Ch>& sValue)
+	{
+		auto& allocator = GetAllocator();
+		GenericValue<Encoding> key(lpKey, allocator);
+		GenericValue<Encoding> value(sValue.c_str(), allocator);
+		return GenericDocument<Encoding>::AddMember(key, value, allocator);
+	}	
 
 	GenericValue<Encoding>& Add(const Ch* lpKey, const Ch* lpValue)
 	{
@@ -123,14 +132,191 @@ public:
 		return GenericDocument<Encoding>::PushBack(value, allocator);
 	}
 
+	GenericValue<Encoding>& Add(const Ch* lpKey, GenericValueHandle<Encoding>& jValue)
+	{
+		auto& allocator = GetAllocator();
+		GenericValue<Encoding> key(lpKey, allocator);
+		return GenericDocument<Encoding>::AddMember(key, jValue.m_Value, allocator);
+	}
+		
 	std::basic_string<Ch> toStyledString()
 	{
 		GenericStringBuffer<Encoding> s;
 		Writer<GenericStringBuffer<Encoding>, Encoding, Encoding> writer(s);
-		Accept(writer);
+		GenericDocument<Encoding>::Accept(writer);
 		return s.GetString();
 	}
 };
+
+template <typename Encoding>
+class GenericValueHandle
+{
+	friend GenericDocumentHandle<Encoding>;
+	typedef typename Encoding::Ch Ch;
+public:
+	GenericValueHandle(GenericDocumentHandle<Encoding>& json)
+		: m_Json(json)
+	{
+
+	}
+public:
+	GenericValue<Encoding>& GetValue()
+	{
+		return m_Value;
+	}
+	GenericValue<Encoding>& Add(const Ch* key, GenericValue<Encoding>& value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, const std::basic_string<Ch>& value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		GenericValue<Encoding> v(value.c_str(), allocator);
+		return m_Value.AddMember(k, v, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, const Ch* value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		GenericValue<Encoding> v(value, allocator);
+		return m_Value.AddMember(k, v, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, bool value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, double value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, int value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, unsigned int value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+	GenericValue<Encoding>& Add(const Ch* key, unsigned long value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, static_cast<unsigned int>(value), allocator);
+	}
+	GenericValue<Encoding>& Add(const Ch* key, int64_t value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value, allocator);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, uint64_t value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(key, value, allocator);
+	}
+	
+	template <typename EnumType>
+	GenericValue<Encoding>& AddEnum(const Ch* key, EnumType value)
+	{
+		return Add(key, (int)value);
+	}
+
+	GenericValue<Encoding>& Add(const Ch* key, GenericValueHandle<Encoding>& value)
+	{
+		if (!m_Value.IsObject())
+		{
+			m_Value.SetObject();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> k(key, allocator);
+		return m_Value.AddMember(k, value.m_Value, allocator);
+	}
+
+	template <typename ValueType>
+	GenericValue<Encoding>& Push(ValueType value)
+	{
+		if (!m_Value.IsArray())
+		{
+			m_Value.SetArray();
+		}
+		auto& allocator = m_Json.GetAllocator();
+		GenericValue<Encoding> v(value, allocator);
+		return m_Value.PushBack(v, allocator);
+	}
+
+	GenericValue<Encoding>& PushValue(GenericValueHandle<Encoding>& value)
+	{
+		if (!m_Value.IsArray())
+		{
+			m_Value.SetArray();
+		}
+		return m_Value.PushBack(value.m_Value, m_Json.GetAllocator());
+	}
+protected:
+	GenericValue<Encoding> m_Value;
+	GenericDocumentHandle<Encoding>& m_Json;
+};
+
+
 
 template <typename Encoding>
 class RapidFunT
@@ -232,7 +418,7 @@ typedef GenericDocumentHandle<UTF16<>> RapidJsonW;
 // 这个用于 多字节 
 typedef GenericDocumentHandle<UTF8<>> RapidJson;
 
-
+typedef GenericValueHandle<UTF16<>> RapidValueW;
 #endif
 
 

@@ -10,6 +10,8 @@
 #ifndef __CODINGCONV_H___
 #define __CODINGCONV_H___
 
+#define _FUNC_W_		CodingConv::AToU(__func__).c_str()
+
 class CodingConv
 {
 public:
@@ -20,12 +22,12 @@ public:
 
 		// cchWideChar 如果传 -1  那么返回长度 包括 '\0'  也就是 比 wcslen 多 1;
 		// 所以 还是 传 len 取好了 
-		int nLen = WideCharToMultiByte(CodePage, 0, lpszW, size_w, NULL, 0, NULL, NULL);
+		int nLen = WideCharToMultiByte(CodePage, 0, lpszW, static_cast<int>(size_w), NULL, 0, NULL, NULL);
 
 		std::string sOut;			// string 不能包含 '\0' 会发生很多意外的事情
 		sOut.resize(nLen);
 
-		nLen = WideCharToMultiByte(CodePage, 0, lpszW, size_w, (char*)sOut.data(), nLen, NULL, NULL);
+		nLen = WideCharToMultiByte(CodePage, 0, lpszW, static_cast<int>(size_w), (char*)sOut.data(), nLen, NULL, NULL);
 
 		return sOut;
 	}
@@ -44,12 +46,12 @@ public:
 
 		// cbMultiChar 如果传 -1  那么返回长度 包括 '\0'  也就是 比 wcslen 多 1;
 		// 所以 还是 传 len 取好了 
-		int nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, size_a, NULL, 0);
+		int nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, static_cast<int>(size_a), NULL, 0);
 
 		std::wstring sOut;
 		sOut.resize(nBufferLen);
 
-		nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, size_a, (wchar_t*)sOut.data(), nBufferLen);
+		nBufferLen = MultiByteToWideChar(CodePage, 0, lpszA, static_cast<int>(size_a), (wchar_t*)sOut.data(), nBufferLen);
 
 		return sOut;
 	}
@@ -67,7 +69,7 @@ public:
 		if ((nullptr == lpszW) || (0 == size_w)) return STRA();
 
 		//得到转换后的字符串长度
-		int nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, size_w, NULL, 0, NULL, NULL);
+		int nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, static_cast<int>(size_w), NULL, 0, NULL, NULL);
 
 		LPSTR lpszUtf8 = new(std::nothrow) char[nBufferLen];
 		if (nullptr == lpszUtf8)
@@ -75,7 +77,7 @@ public:
 			return lpszUtf8;
 		}
 
-		nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, size_w, lpszUtf8, nBufferLen, NULL, NULL);
+		nBufferLen = WideCharToMultiByte(CP_UTF8, 0, lpszW, static_cast<int>(size_w), lpszUtf8, nBufferLen, NULL, NULL);
 
 		if (nullptr != lpszUtf8)
 		{
@@ -96,7 +98,7 @@ public:
 			return STRW();
 
 		//得到转换后的字符串长度
-		int nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, size_a, NULL, 0);
+		int nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, static_cast<int>(size_a), NULL, 0);
 
 		//new buffer
 		LPWSTR lpwBuf = new(std::nothrow) wchar_t[nBufferLen];
@@ -105,7 +107,7 @@ public:
 			return lpwBuf;
 		}
 
-		nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, size_a, lpwBuf, nBufferLen);
+		nBufferLen = MultiByteToWideChar(CP_UTF8, 0, lpszUtf8, static_cast<int>(size_a), lpwBuf, nBufferLen);
 
 
 		if (nullptr != lpwBuf)

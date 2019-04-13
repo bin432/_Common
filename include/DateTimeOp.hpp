@@ -1,18 +1,20 @@
-#ifndef __TIME_DATE_H___
-#define __TIME_DATE_H___
+#ifndef __DATE_TIME_H___
+#define __DATE_TIME_H___
 #pragma once
 
 #include <string>
 
-class TimeDate
+class DateTimeOp
 {
 public:
 	//************************************
-	// Method:    获取 当前用户的用户目录  
+	// Method:    获取 时间 格式文本
+	// pTime 空 就获取当前时间
+	// dateChar 年月日 分割   timeChar 时分秒 分割
 	//************************************
-	static std::wstring GetDateTimeFormat(SYSTEMTIME* pTime=nullptr, wchar_t firstChar='-', wchar_t secondChar=':')
+	static std::wstring GetDateTimeText(SYSTEMTIME* pTime=nullptr, wchar_t dateChar='-', wchar_t timeChar=':')
 	{	
-		TCHAR lpTimeBuf[1024] = {0};
+		wchar_t lpTimeBuf[1024] = {0};
 		SYSTEMTIME sysTime;
 		if(nullptr == pTime)
 		{			
@@ -23,23 +25,23 @@ public:
 
 		int nLen = swprintf_s(lpTimeBuf, 1024, L"%04d%c%02d%c%02d %02d%c%02d%c%02d", 
 			pTime->wYear,
-			firstChar,
+			dateChar,
 			pTime->wMonth,
-			firstChar,
+			dateChar,
 			pTime->wDay,
 			
 			pTime->wHour,
-			secondChar,
+			timeChar,
 			pTime->wMinute,
-			secondChar,
+			timeChar,
 			pTime->wSecond);
 	
 		return std::wstring(lpTimeBuf, nLen);
 	}
 
-	static std::wstring GetDateFormat(SYSTEMTIME* pTime=NULL, wchar_t cChar='-')
+	static std::wstring GetDateText(SYSTEMTIME* pTime=nullptr, wchar_t cChar='-')
 	{
-		TCHAR lpTimeBuf[1024] = {0};
+		wchar_t lpTimeBuf[1024] = {0};
 		SYSTEMTIME sysTime;
 		if(nullptr == pTime)
 		{			
@@ -57,9 +59,9 @@ public:
 		return std::wstring(lpTimeBuf, nLen);
 	}
 
-	static std::wstring GetTimeFormat(SYSTEMTIME* pTime=nullptr, wchar_t cChar=':')
+	static std::wstring GetTimeText(SYSTEMTIME* pTime=nullptr, wchar_t cChar=':')
 	{
-		TCHAR lpTimeBuf[1024] = {0};
+		wchar_t lpTimeBuf[1024] = {0};
 		SYSTEMTIME sysTime;
 		if(NULL == pTime)
 		{			
@@ -100,4 +102,4 @@ public:
 
 
 
-#endif
+#endif		//

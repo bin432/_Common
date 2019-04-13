@@ -423,7 +423,7 @@ public:
 	}
 
 	// 获取文件的当前目录 路径 就是 去掉文件名 
-	static std::wstring GetFileCurDir(const wchar_t* lpFileName)
+	static std::wstring GetFileCurDir(const wchar_t* lpFileName, bool hadBackslash=false)
 	{
 		std::wstring sFilePath(lpFileName);
 		if (sFilePath.at(sFilePath.length() - 1) == '\\')
@@ -435,9 +435,11 @@ public:
 		int nPos = sFilePath.rfind('\\');
 		if (-1 != nPos)
 		{
+			if (hadBackslash) ++nPos;
+
 			sFilePath = sFilePath.substr(0, nPos);
 		}
-
+		
 		return sFilePath;
 	}
 

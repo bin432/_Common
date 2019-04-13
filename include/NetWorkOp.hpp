@@ -29,17 +29,6 @@ public:
 	{
 		std::string szHostName;
 
-		WORD wVersionRequested;
-		WSADATA wsaData;
-		int err;
-		wVersionRequested = MAKEWORD(2, 2);
-
-		err = WSAStartup(wVersionRequested, &wsaData);
-		if (err != 0)
-		{
-			return "";
-		}
-
 		char lpHostName[256] = {0};
 		if (SOCKET_ERROR == gethostname(lpHostName, sizeof(lpHostName)))
 		{
@@ -50,21 +39,21 @@ public:
 		szHostName = lpHostName;
 
 
-		if (NULL != pStrLocalIp || NULL != pStrLocalMacAddr)
+		if (nullptr != pStrLocalIp || nullptr != pStrLocalMacAddr)
 		{
-			char* lpLocalIp = NULL;
+			char* lpLocalIp = nullptr;
 			HOSTENT* pHost = gethostbyname(lpHostName);
-			if (pHost != NULL)
+			if (pHost != nullptr)
 			{
 				lpLocalIp = inet_ntoa(*(IN_ADDR*)pHost->h_addr_list[0]);
-				if (NULL != pStrLocalIp)
+				if (nullptr != pStrLocalIp)
 					*pStrLocalIp = lpLocalIp;
 
-				if (NULL != pStrLocalMacAddr)
+				if (nullptr != pStrLocalMacAddr)
 				{
 					byte mac[6] = {0};
 					ULONG uMacLen = 6;
-					DWORD dwStatus = SendARP(inet_addr(lpLocalIp), NULL, mac, &uMacLen);
+					DWORD dwStatus = SendARP(inet_addr(lpLocalIp), 0, mac, &uMacLen);
 					if (NO_ERROR == dwStatus)
 					{
 						char lpMac[20] = {0};
@@ -78,9 +67,60 @@ public:
 			}
 		}
 
-		WSACleanup();
-
 		return szHostName;
+	}
+
+	//
+	struct NetAddr
+	{
+		//std::string name;
+		std::string ip;
+		std::string mac;
+	};
+
+	static std::string GetNetAddr(std::vector<NetAddr>& addrs)
+	{
+		char lpHostName[256] = { 0 };
+		if (SOCKET_ERROR == gethostname(lpHostName, sizeof(lpHostName)))
+		{
+			return "";
+		}
+		std::string hostName = lpHostName;
+
+		HOSTENT* host = gethostbyname(lpHostName);
+		if (nullptr == host) return 0;
+
+		char* al = nullptr;
+		int i = 0;
+		while(true)
+		{
+			al = host->h_addr_list[i];
+			if (nullptr == al)
+				break;
+
+			char* ip = inet_ntoa(*(IN_ADDR*)al);
+			
+			NetAddr na;
+			na.ip = ip;
+			na.mac = GetMacAddr(ip);
+			addrs.push_back(std::move(na));
+
+			++i;
+		}
+		return hostName;
+	}
+
+	static std::string GetMacAddr(const char* ip)
+	{
+		byte buf[6] = { 0 };
+		ULONG uMacLen = 6;
+		DWORD dwStatus = SendARP(inet_addr(ip), 0, buf, &uMacLen);
+
+		std::string mac(17, 0);
+		sprintf_s((char*)mac.data(), 18, "%02X-%02X-%02X-%02X-%02X-%02X",
+			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+
+		return mac;
 	}
 };
 

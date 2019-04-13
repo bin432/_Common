@@ -5,6 +5,8 @@
 #include <Psapi.h>
 #pragma comment(lib, "Psapi.lib")
 
+#include <list>
+
 class ProcessFun
 {
 public:
@@ -37,6 +39,32 @@ public:
 
 		CloseHandle(hSnapshot);
 		return dwProcessId;
+	}
+
+	static std::list<DWORD> GetIdList(const wchar_t* lpProcName)
+	{
+		PROCESSENTRY32W pe;
+		pe.dwSize = sizeof(PROCESSENTRY32W);
+
+		std::list<DWORD> re;
+		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (TRUE == Process32FirstW(hSnapshot, &pe))
+		{
+			do
+			{
+				pe.dwSize = sizeof(PROCESSENTRY32);
+				if (FALSE == Process32Next(hSnapshot, &pe))
+					break;
+
+				if (0 == lstrcmpi(lpProcName, pe.szExeFile))
+				{
+					re.push_back(pe.th32ProcessID);
+				}
+			} while (NULL != hSnapshot);
+		}
+
+		CloseHandle(hSnapshot);
+		return re;
 	}
 
 	// 这个 需要 权限
@@ -243,7 +271,7 @@ public:
 				wchar_t cDriveArr[512] = {0};
 				wchar_t cDevName[128];
 				DWORD dwLen = GetLogicalDriveStringsW(512, cDriveArr);
-				for (int i = 0; i < dwLen; i += 4)
+				for (DWORD i = 0; i < dwLen; i += 4)
 				{
 					if ('A' == cDriveArr[i] ||
 						'B' == cDriveArr[i])

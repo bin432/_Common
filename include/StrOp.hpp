@@ -1,20 +1,23 @@
 /* at 2018/09/28				v2.1
-
-	Format 函数  去掉了 string 末尾 的 '\0'.
+	这里 是 对 std::string wstring 方法的 一些扩展 
+	如果 后续C++ 添加了 这些方法  
+	
 	//  %I64d
 */
 
 #pragma once
 #ifndef __STR_OP_H___
 #define __STR_OP_H___
+#include <tchar.h>
 #include <vector>
+#include <stdarg.h>
 
 class StrOp
 {
 public:
 	static bool IsNullOrEmpty(LPCTSTR lpStr)
 	{
-		return nullptr == lpStr || 0 == lstrlen(lpStr);
+		return nullptr == lpStr || 0 == _tcslen(lpStr);
 	}
 	static void MakeUpper(std::wstring& s)
 	{
@@ -24,11 +27,19 @@ public:
 	{
 		_wcslwr_s((wchar_t*)s.data(), s.length()+1);
 	}
+	static int CompareNoCase(std::string& s, LPCSTR lpsz)
+	{
+		return _stricmp(s.c_str(), lpsz);
+	}
+	static int CompareNoCase(std::wstring& s, LPCWSTR lpsz)
+	{
+		return _wcsicmp(s.c_str(), lpsz);
+	}
 	static std::wstring Format(LPCWSTR format, ...)
 	{
 		va_list v;
 		va_start(v, format);
-		int nlen = _vscwprintf(format, v);
+		int nlen = _vscwprintf(format, v);			// 这里不 +1  因为string 是 不需要 \0 结尾的
 		std::wstring s(nlen, nlen);
 		int n = vswprintf_s((LPWSTR)s.data(), nlen+1, format, v);
 		va_end(v);
@@ -66,14 +77,14 @@ public:
 		return s;
 	}
 
-	static int Split(const wchar_t* lpStr, char cSep, std::vector<std::wstring>& arr, unsigned int uStrLen=0)
+	static int Split(const wchar_t* lpStr, char cSep, std::vector<std::wstring>& arr, size_t uStrLen=0)
 	{
 		if(0 == uStrLen)
-			uStrLen = lstrlenW(lpStr);
+			uStrLen = wcslen(lpStr);
 
-		int nValueBegin = 0;
+		size_t nValueBegin = 0;
 
-		for (int i = 1; i <= uStrLen; ++i)
+		for (size_t i = 1; i <= uStrLen; ++i)
 		{
 			if (cSep == lpStr[i] && nValueBegin < i)
 			{
